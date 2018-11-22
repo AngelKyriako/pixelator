@@ -1,7 +1,7 @@
 doctype html
 html(lang="en")
   head
-    title simple chat
+    title pixelator
 
     link(rel='stylesheet', href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css')
 
@@ -19,6 +19,9 @@ html(lang="en")
     .main.container
       include partials/header.pug
 
+      include partials/globalCanvas.pug
+      br
+      br
       include partials/chatMessages.pug
       
       if user

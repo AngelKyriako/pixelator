@@ -42,7 +42,7 @@ app.use(cookieParser());
 
 // the request body parser (json & url params)
 var bodyParser = require('body-parser');
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '1mb'}));
 app.use(bodyParser.urlencoded({extended: true}));
 
 // gzip compression when appropriate
@@ -82,7 +82,14 @@ passport.serializeUser(function(user, cb) {
 });
 
 passport.deserializeUser(function(id, cb) {
-  User.findOne({_id: id}).exec(cb);
+  User.findOne({_id: id}).exec((err, user) => {
+    if (!!user) {
+      cb(null, user.toClient())
+    }
+    else {
+      cb(err)
+    }
+  });
 });
 
 passport.use(new LocalStrategy({
@@ -132,6 +139,10 @@ app.get('/',
         res.render('index', {
           user: req.user,
           messages: messages.reverse(),
+          globalCanvas: {
+            width: Image.WIDTH,
+            height: Image.HEIGHT
+          }
         });     
       }
     });
@@ -244,62 +255,91 @@ app.post('/api/message',
     });
 });
 
-// Paint pixes route
-app.post('/api/paintpixels',
+// Get global canvas state
+app.get('/api/globalcanvas',
+function(req, res, next) {
+  Image.getGlobalCanvas((err, image) => {
+    if (!image) {
+      res.status(404).send();
+    } else {
+      res.status(200).json(image.toClient());
+    }
+  });
+});
+
+// Paint pixels to global canvas route
+app.post('/api/globalcanvas/paint',
   ensureAuthenticated,
   function(req, res, next) {
     var user = req.user;
     var body = req.body;
 
-    Image.findOne({}, function(err, image) {
+    console.info('painting to canvas with body: ', body)
+
+    Image.getGlobalCanvas((err, image) => {
       if (err) {
-        res.status(400).json(err);
+        console.error('failed to get global image', err)
+        res.status(500).send();
       } else {
+        var pixel = body.pixel;
 
-        // Validate input
-        var pixelsToPaint = [];
-        for(pixelIndex in body.pixels) {
+        console.info('validating input before painting is started...');
+        var indices = [];
 
-          if (pixelIndex > 0 && pixelIndex < image.size) {
+        try {
+          body.startX = parseInt(body.startX);
+          body.startY = parseInt(body.startY);
+          body.endX = parseInt(body.endX);
+          body.endY = parseInt(body.endY);
+  
+          pixel = {
+            r: parseInt(pixel.r),
+            g: parseInt(pixel.g),
+            b: parseInt(pixel.b),
+            a: parseInt(pixel.a)
+          };
 
-            var pixelCandidate = body.pixels[pixelIndex];
-            if (
-              !!pixelCandidate && 
-              pixelCandidate.r >= 0 && pixelCandidate.r <= 255 && 
-              pixelCandidate.g >= 0 && pixelCandidate.g <= 255 && 
-              pixelCandidate.b >= 0 && pixelCandidate.b <= 255 && 
-              pixelCandidate.a >= 0 && pixelCandidate.a <= 255
-            ) {
-              pixelsToPaint[pixelIndex] = pixelCandidate;
-            }
+          for (i = body.startX; i < body.endX && i < image.width; ++i) {
+            for (j = body.startY; j < body.endY && j < image.height; ++j) {
+              indices.push(i + j * image.width);
+            }  
           }
-        }
 
-        if (!!pixelsToPaint || pixelsToPaint.length == 0) {
-          res.status(400).json("Bad pixel input format. Use a JSON of pixelIndex => {r: [0,255], g: [0,255], b: [0,255], a: [0,255]}");
-        }
-        else {
-          res.status(200).json(
-            {model: pixelsToPaint}
-          );
-  
-          socketServer.emit('image.pixelspainted', {
-            model: pixelsToPaint
-          });
-  
-          for(pixelIndex in pixelsToPaint) {
-            image.pixels[pixelIndex] = pixelsToPaint[pixelIndex];
+          if (
+            !pixel ||
+            !indices < 0 || indices.length == 0 ||
+            pixel.r < 0 || pixel.r > 255 || 
+            pixel.g < 0 || pixel.g > 255 || 
+            pixel.b < 0 || pixel.b > 255 || 
+            pixel.a < 0 || pixel.a > 255
+          ) {
+            throw new Error("Invalid pixel or indices");
           }
-  
-          image.save((err) => {
-            if (err) {
-              socketServer.emit('image.pixelspainted.revert', {
-                model: pixelsToPaint,
-              });
-            }
-          });
+
+        } catch(e) {
+          return res.status(400).json("Bad format, expecting: { pixel: {r: [0,255], g: [0,255], b: [0,255], a: [0,255]}, startX: number, startY: number, endX: number, endY: number }");
+        }
+    
+        console.info('painting to canvas with color ', pixel, ' at ', indices.length, ' pixels.')
+
+        var pixelIndex;
+        for (i in indices) {
+          pixelIndex = indices[i];
+
+          image.pixels[pixelIndex] = pixel;
         }
 
+        var paintDiff = {pixel, indices};
+
+        res.status(200).json(paintDiff);
+
+        socketServer.emit('image.paintpixels', paintDiff);
+
+        image.save((err) => {
+          if (err) {
+            socketServer.emit('image.paintpixels.revert', paintDiff);
+          }
+        });
       }
     });
 });
@@ -368,7 +408,7 @@ app.get('/api/geo',
           // https only
          ,secure: config.SSL
         });
-        
+
         res.status(200).json(data);
       }
   });

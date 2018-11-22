@@ -1,6 +1,6 @@
 {
 	"version": "1.0.0",
-	"description": "Advanced nodejs/express app for free code camp",
+	"description": "A shared pixel draw app.",
 	"main": "server.js",
 	"scripts": {
 		"prestart": "npm install",
@@ -29,11 +29,11 @@
 		"node": "^6.9.1"
 	},
 	"keywords": [
-		"freecodecamp",
-		"fcc",
 		"node",
-		"hyperdev",
-		"express"
+		"express",
+		"mongoose",
+		"socket.io",
+		"canvas 2D"
 	],
 	"license": "ISC"
 }
