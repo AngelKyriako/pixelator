@@ -162,7 +162,11 @@ $('document').ready(function onReady() {
       data: args,
       dataType: 'json'
     }).done(function(diff) {
-      // Do nothing, the socket event takes care of drawing.
+      if (!io) {
+        _globalCanvas.paintDiff(diff);
+      } else {
+        // Do nothing, the socket event takes care of drawing.
+      }
       console.info('canvas paint successful. Diff applied', diff);
     })
     .fail(function(err) {

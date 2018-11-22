@@ -5,7 +5,8 @@
 	"scripts": {
 		"prestart": "npm install",
 		"start": "node server-standalone.js",
-		"webtask-deploy": "wt create server-webtask.js --bundle --name pixelator",
+		"webtask-deploy": "wt create server-webtask.js --bundle --name pixelator --meta wt-compiler=webtask-tools/express",
+		"webtask-start": "env SSL=false wt serve server-webtask.js",
 		"now-deploy": "now && now alias"
 	},
 	"dependencies": {
