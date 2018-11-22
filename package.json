@@ -1,10 +1,12 @@
 {
 	"version": "1.0.0",
-	"description": "A shared pixel draw app.",
-	"main": "server.js",
+	"description": "A shared canvas paint app.",
+	"main": "server-standalone.js",
 	"scripts": {
 		"prestart": "npm install",
-		"start": "node server.js"
+		"start": "node server-standalone.js",
+		"webtask-deploy": "wt create server-webtask.js --bundle --name pixelator",
+		"now-deploy": "now && now alias"
 	},
 	"dependencies": {
 		"bcrypt": "^3.0.2",
@@ -23,7 +25,8 @@
 		"pug": "^2.0.0-beta6",
 		"request": "^2.75.0",
 		"socket.io": "1.5.0",
-		"static-expiry": "^0.0.11"
+		"static-expiry": "^0.0.11",
+		"webtask-tools": "^3.4.0"
 	},
 	"engines": {
 		"node": "^6.9.1"
