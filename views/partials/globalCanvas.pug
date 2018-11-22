@@ -1,22 +1,22 @@
 .row
   .col-xs-8
     .row
-      h4 Canvas #{globalCanvas.width} x #{globalCanvas.height}
+      h3 Canvas #{globalCanvas.width} x #{globalCanvas.height}
     .row
       canvas#globalCanvas(width="512", height="512")
 
   .col-xs-4
     .row
-      h4 Paint Area
+      h3 Paint Area
     if !user  
-      p Not available, login below.
+      h5 Not available, login below.
     else
       .row
-        p Choose a color to paint
-        input#color-picker(type="color")
+        p Choose your color
+        input#color-picker(value="000000" class="jscolor {width:243, height:150, position:'right', borderColor:'#FFF', insetColor:'#FFF', backgroundColor:'#666'}")
+
       br
       .row
-        p Rectangle
         p X 
           .row.col
             input#color-picker-start-x(type="number")
@@ -30,4 +30,10 @@
           .row
             input#color-picker-height(type="number")
       .row
-        button#color-picker-apply-btn.btn.btn-primary Apply
+        button#color-picker-apply-btn.btn.btn-primary Paint Rect
+
+      .row
+        div#paint-rect-error(class="alert alert-danger fade in" style="display: none")
+          a(href="#" class="close" data-dismiss="alert")
+          <strong>Error!</strong> Not a valid rectangle. Have in mind that the canvas supports #{globalCanvas.width} x #{globalCanvas.height} pixels.
+      </div>

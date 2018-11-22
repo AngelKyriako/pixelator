@@ -124,7 +124,8 @@ $('document').ready(function onReady() {
     startY: $("#color-picker-start-y"),
     width: $("#color-picker-width"),
     height: $("#color-picker-height"),
-    applyBtn: $("#color-picker-apply-btn")
+    applyBtn: $("#color-picker-apply-btn"),
+    errorMessage: $('#paint-rect-error')
   };
 
   _colorPickerUI.applyBtn.click(function() {
@@ -166,6 +167,11 @@ $('document').ready(function onReady() {
     })
     .fail(function(err) {
       console.error('send pixels to paint, failed with error: ', err);
+
+      _colorPickerUI.errorMessage.show();
+      setTimeout(function() {
+        _colorPickerUI.errorMessage.hide();
+      }, 7000);
     });    
   });
 
